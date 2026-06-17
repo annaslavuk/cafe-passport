@@ -45,10 +45,17 @@ export default async function handler(req: any, res: any) {
     // No Accept header: [out:json] in the query is the sole format directive.
     // Adding Accept: application/json causes 406 when Overpass's form parser
     // mis-handles any encoding detail and defaults to XML output.
+    // Forward the browser's User-Agent so Overpass sees a browser request,
+    // exactly like the Vite dev proxy does. Without this, Node.js's default
+    // "node" UA is blocked by Overpass's Apache configuration.
+    const forwardUA = (req.headers['user-agent'] as string | undefined)
+      ?? 'Mozilla/5.0 (compatible; cafe-passport/1.0)';
+
     const upstream = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': forwardUA,
       },
       body: rawBody,
       signal: controller.signal,
