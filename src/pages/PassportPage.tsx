@@ -9,10 +9,6 @@ interface Props {
   navigate: NavFn;
 }
 
-// Deterministic tilt per slot so stamps look hand-placed, not grid-rigid
-const STAMP_TILTS = [-6, 4, -3, 8, -7, 3, -5, 9, -4, 6, -8, 2, -9, 5, -2];
-const tiltDeg = (i: number) => STAMP_TILTS[i % STAMP_TILTS.length];
-
 export default function PassportPage({ navigate }: Props) {
   const [shops, setShops] = useState<Shop[]>([]);
 
@@ -50,48 +46,40 @@ export default function PassportPage({ navigate }: Props) {
       {count === 0 ? (
         <EmptyState navigate={navigate} />
       ) : (
-        /* Thin-bordered inset evokes a passport page spread */
-        <div style={{ padding: '14px 14px 0' }}>
-          <div style={{
-            border: '1px solid #E8D5B0',
-            borderRadius: '1.1rem',
-            padding: '16px 8px 12px',
-          }}>
-            {/* Unlocked stamps */}
-            {unlocked.length > 0 && (
-              <>
-                <SectionLabel>Collected ({unlocked.length})</SectionLabel>
-                {/* overflow:visible so rotated corner pixels aren't clipped */}
-                <div className="stamp-grid" style={{ padding: '6px', marginBottom: 16, overflow: 'visible' }}>
-                  {unlocked.map((shop, i) => (
-                    <StampTile
-                      key={shop.id}
-                      shop={shop}
-                      index={i}
-                      onTap={() => navigate({ to: 'shop-detail', shopId: shop.id! })}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+        <div style={{ padding: '16px 16px 0' }}>
+          {/* Unlocked stamps */}
+          {unlocked.length > 0 && (
+            <>
+              <SectionLabel>Collected ({unlocked.length})</SectionLabel>
+              <div className="stamp-grid" style={{ padding: 0, marginBottom: 20 }}>
+                {unlocked.map((shop, i) => (
+                  <StampTile
+                    key={shop.id}
+                    shop={shop}
+                    index={i}
+                    onTap={() => navigate({ to: 'shop-detail', shopId: shop.id! })}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
-            {/* Locked / not-yet-visited */}
-            {locked.length > 0 && (
-              <>
-                <SectionLabel>Added, not yet visited ({locked.length})</SectionLabel>
-                <div className="stamp-grid" style={{ padding: '6px', marginBottom: 4, overflow: 'visible' }}>
-                  {locked.map((shop, i) => (
-                    <LockedTile
-                      key={shop.id}
-                      shop={shop}
-                      index={i}
-                      onTap={() => navigate({ to: 'shop-detail', shopId: shop.id! })}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          {/* Locked / not-yet-visited */}
+          {locked.length > 0 && (
+            <>
+              <SectionLabel>Added, not yet visited ({locked.length})</SectionLabel>
+              <div className="stamp-grid" style={{ padding: 0, marginBottom: 20 }}>
+                {locked.map((shop, i) => (
+                  <LockedTile
+                    key={shop.id}
+                    shop={shop}
+                    index={i}
+                    onTap={() => navigate({ to: 'shop-detail', shopId: shop.id! })}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -101,19 +89,10 @@ export default function PassportPage({ navigate }: Props) {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      fontSize: '0.68rem',
-      fontWeight: 700,
-      letterSpacing: '0.12em',
-      textTransform: 'uppercase',
-      color: '#C27D38',
-      marginBottom: 4,
-      paddingLeft: 6,
+      fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em',
+      textTransform: 'uppercase', color: '#C27D38', marginBottom: 10,
     }}>
       {children}
-      <span style={{ flex: 1, height: '1px', background: '#E8D5B0' }} />
     </div>
   );
 }
@@ -133,8 +112,8 @@ function StampTile({ shop, index, onTap }: { shop: Shop; index: number; onTap: (
         border: 'none',
         cursor: 'pointer',
       }}
-      initial={{ opacity: 0, scale: 0.7, rotate: 0 }}
-      animate={{ opacity: 1, scale: 1, rotate: tiltDeg(index) }}
+      initial={{ opacity: 0, scale: 0.7 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 280, damping: 22, delay: index * 0.04 }}
       whileTap={{ scale: 0.92 }}
       onClick={onTap}
