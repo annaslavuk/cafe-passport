@@ -567,7 +567,10 @@ async function fetchCafesByBbox(
   const tid = setTimeout(() => controller.abort(), 35_000);
 
   try {
-    const res = await fetch('/api/overpass', {
+    // Call Overpass directly from the browser — fetch goes from the user's
+    // device, not Vercel's servers, so there's no data-center IP block.
+    // Overpass sends Access-Control-Allow-Origin: * on successful responses.
+    const res = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'data=' + encodeURIComponent(query),
