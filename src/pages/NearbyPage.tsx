@@ -43,6 +43,8 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
   const [tooZoomedOut,  setTooZoomedOut]  = useState(false);
   const [resultCount,   setResultCount]   = useState<number | null>(null);
   const [searchErr,     setSearchErr]     = useState<string | null>(null);
+  const [permDenied,   setPermDenied]   = useState(false);
+  const [helpOpen,     setHelpOpen]     = useState(false);
 
   // Load passport shops; keep ref in sync for use inside searchArea
   useEffect(() => {
@@ -53,18 +55,23 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setErrMsg('Your browser doesn\'t support geolocation.');
+      setPermDenied(false);
       setStatus('error');
       return;
     }
     setStatus('locating');
+    setPermDenied(false);
+    setHelpOpen(false);
     navigator.geolocation.getCurrentPosition(
       pos => {
         setUserPos([pos.coords.latitude, pos.coords.longitude]);
         setStatus('ready');
       },
       err => {
+        const denied = err.code === err.PERMISSION_DENIED;
+        setPermDenied(denied);
         setErrMsg(
-          err.code === err.PERMISSION_DENIED
+          denied
             ? 'Location permission denied. Check your browser or device settings to re-enable it.'
             : err.code === err.POSITION_UNAVAILABLE
             ? 'Your location couldn\'t be determined. Make sure location services are enabled.'
@@ -235,9 +242,72 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
               <p style={{
                 color: '#6B3F1A', fontWeight: 700, textAlign: 'center',
                 padding: '0 32px', fontFamily: '"Inter", system-ui, sans-serif', lineHeight: 1.5,
+                margin: 0,
               }}>
                 {errMsg}
               </p>
+
+              {permDenied && (
+                <div style={{ width: '100%', maxWidth: 320, padding: '0 28px', boxSizing: 'border-box' }}>
+                  <button
+                    onClick={() => setHelpOpen(o => !o)}
+                    style={{
+                      display: 'block', margin: '0 auto',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: '#C27D38', fontFamily: '"Inter", system-ui, sans-serif',
+                      fontSize: '0.8rem', fontWeight: 600, padding: '2px 0',
+                      textDecoration: 'underline dotted',
+                    }}
+                  >
+                    {helpOpen ? '▲ Hide instructions' : '▼ How do I enable this?'}
+                  </button>
+
+                  {helpOpen && (
+                    <div style={{
+                      marginTop: 10, background: '#F5EDD8', borderRadius: 12,
+                      padding: '12px 14px', fontFamily: '"Inter", system-ui, sans-serif',
+                    }}>
+                      {([
+                        {
+                          label: 'iPhone · Safari',
+                          text: 'Tap "aA" in the address bar → Website Settings → Location → Allow, then reload.',
+                          note: 'Also: Settings → Privacy & Security → Location Services → On',
+                        },
+                        {
+                          label: 'iPhone · Chrome',
+                          text: 'iPhone Settings → Chrome → Location → While Using the App, then reload.',
+                        },
+                        {
+                          label: 'Android · Chrome',
+                          text: 'Tap the lock icon in the address bar → Permissions → Location → Allow, then reload.',
+                        },
+                        {
+                          label: 'Computer · Chrome / Edge',
+                          text: 'Click the icon at the left of the address bar → set Location to Allow, then reload.',
+                        },
+                      ] as { label: string; text: string; note?: string }[]).map(({ label, text, note }, i, arr) => (
+                        <div key={label} style={{ marginBottom: i < arr.length - 1 ? 10 : 0 }}>
+                          <div style={{
+                            fontSize: '0.68rem', fontWeight: 700, color: '#8B5E3C',
+                            letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 2,
+                          }}>
+                            {label}
+                          </div>
+                          <div style={{ fontSize: '0.77rem', color: '#6B3F1A', lineHeight: 1.5 }}>
+                            {text}
+                          </div>
+                          {note && (
+                            <div style={{ fontSize: '0.7rem', color: '#8B5E3C', marginTop: 2, lineHeight: 1.4 }}>
+                              {note}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={requestLocation}
                 style={{
@@ -497,7 +567,7 @@ async function fetchCafesByBbox(
   const tid = setTimeout(() => controller.abort(), 35_000);
 
   try {
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
+    const res = await fetch('/api/overpass', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'data=' + encodeURIComponent(query),
