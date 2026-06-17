@@ -17,6 +17,16 @@ interface OsmCafe {
   addr?: string;
 }
 
+interface NominatimPlace {
+  osm_id:       number;
+  osm_type:     string;
+  lat:          string;
+  lon:          string;
+  display_name: string;
+  namedetails?: { name?: string };
+  extratags?:   Record<string, string>;
+}
+
 interface Sheet {
   cafe: OsmCafe;
   shop: Shop | null;
@@ -541,77 +551,46 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
   );
 }
 
-// ── Overpass bbox fetch ────────────────────────────────────────────────────
+// ── Nominatim bbox fetch ───────────────────────────────────────────────────
+// Nominatim (OpenStreetMap geocoding API) has CORS headers and accepts browser
+// requests without any API key. Overpass blocks cross-origin browser requests
+// and rejects data-center IPs, so we use Nominatim instead.
 
 async function fetchCafesByBbox(
   south: number, west: number, north: number, east: number,
 ): Promise<OsmCafe[]> {
-  // Overpass bbox order: south,west,north,east  (= min_lat,min_lon,max_lat,max_lon)
-  const bbox = `${south},${west},${north},${east}`;
-  const clause = (tag: string) =>
-    `node[${tag}](${bbox});way[${tag}](${bbox});relation[${tag}](${bbox});`;
-
-  const query =
-    `[out:json][timeout:30];` +
-    `(` +
-    clause('"amenity"="cafe"') +
-    clause('"shop"="coffee"') +
-    `node["cuisine"="coffee_shop"](${bbox});` +
-    `way["cuisine"="coffee_shop"](${bbox});` +
-    `);` +
-    `out center tags;`;
-
-  console.log(`[NearbyPage] Overpass query (bbox ${bbox}):\n${query}`);
+  // Nominatim viewbox: left,top,right,bottom = west,north,east,south
+  const viewbox = `${west},${north},${east},${south}`;
+  const base = `https://nominatim.openstreetmap.org/search?format=json&bounded=1&limit=50&extratags=1&namedetails=1&viewbox=${viewbox}`;
 
   const controller = new AbortController();
   const tid = setTimeout(() => controller.abort(), 35_000);
 
   try {
-    // Call Overpass directly from the browser — fetch goes from the user's
-    // device, not Vercel's servers, so there's no data-center IP block.
-    // Overpass sends Access-Control-Allow-Origin: * on successful responses.
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'data=' + encodeURIComponent(query),
-      signal: controller.signal,
-    });
+    // Two parallel searches cover the main OSM tagging conventions for coffee shops
+    const search = (params: string) =>
+      fetch(`${base}&${params}`, { signal: controller.signal })
+        .then(r => { if (!r.ok) throw new Error(`Nominatim ${r.status}`); return r.json() as Promise<NominatimPlace[]>; });
 
-    console.log(`[NearbyPage] Overpass HTTP ${res.status}`);
+    const [cafes, coffeeShops] = await Promise.all([
+      search('amenity=cafe'),
+      search('shop=coffee'),
+    ]);
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(`[NearbyPage] Overpass error body:\n${text.slice(0, 500)}`);
-      if (res.status === 429 || res.status === 504) {
-        throw new Error('Overpass is busy — try again in a moment');
-      }
-      throw new Error(`Overpass returned ${res.status}`);
-    }
+    console.log(`[NearbyPage] Nominatim raw: ${cafes.length} cafes + ${coffeeShops.length} coffee shops`);
 
-    const json = await res.json() as {
-      elements: Array<{
-        id: number; type: string;
-        lat?: number; lon?: number;
-        center?: { lat: number; lon: number };
-        tags?: Record<string, string>;
-      }>;
-    };
-
-    const rawCount = json.elements.length;
-    console.log(`[NearbyPage] raw elements: ${rawCount}`);
-
-    const mapped: OsmCafe[] = json.elements
-      .filter(e => e.tags?.name && (e.lat != null || e.center != null))
-      .map(e => ({
-        id:   e.id,
-        lat:  e.lat  ?? e.center!.lat,
-        lon:  e.lon  ?? e.center!.lon,
-        name: e.tags!.name!,
-        addr: [e.tags?.['addr:housenumber'], e.tags?.['addr:street']]
-          .filter(Boolean).join(' ') || undefined,
-      }));
-
-    console.log(`[NearbyPage] named (have lat+name): ${mapped.length}`);
+    const mapped: OsmCafe[] = [...cafes, ...coffeeShops]
+      .map(p => {
+        const name = p.namedetails?.name ?? p.display_name.split(',')[0].trim();
+        const lat = parseFloat(p.lat);
+        const lon = parseFloat(p.lon);
+        if (!name || isNaN(lat) || isNaN(lon)) return null;
+        const addr = p.extratags?.['addr:housenumber'] && p.extratags?.['addr:street']
+          ? `${p.extratags['addr:housenumber']} ${p.extratags['addr:street']}`
+          : undefined;
+        return { id: p.osm_id, lat, lon, name, addr } satisfies OsmCafe;
+      })
+      .filter((c): c is OsmCafe => c !== null);
 
     const seen = new Set<string>();
     const results = mapped.filter(c => {

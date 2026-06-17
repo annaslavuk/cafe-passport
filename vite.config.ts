@@ -4,15 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  server: {
-    proxy: {
-      '/api/overpass': {
-        target: 'https://overpass-api.de',
-        changeOrigin: true,
-        rewrite: () => '/api/interpreter',
-      },
-    },
-  },
   plugins: [
     react(),
     tailwindcss(),
