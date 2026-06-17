@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import SplashScreen from './components/ui/SplashScreen';
 import BottomNav from './components/layout/BottomNav';
 import PassportPage from './pages/PassportPage';
 import ShopDetailPage from './pages/ShopDetailPage';
@@ -38,6 +39,7 @@ function activeTabForScreen(screen: AppScreen): TabId {
 }
 
 export default function App() {
+  const [splashDone, setSplashDone] = useState(false);
   const [history, setHistory] = useState<AppScreen[]>([{ type: 'tab', tab: 'passport' }]);
   const [slideDir, setSlideDir] = useState(0);
 
@@ -70,7 +72,13 @@ export default function App() {
   const screenKey = JSON.stringify(current);
 
   return (
-    <div className="app-shell">
+    <>
+      <AnimatePresence>
+        {!splashDone && (
+          <SplashScreen key="splash" holdMs={2000} onDone={() => setSplashDone(true)} />
+        )}
+      </AnimatePresence>
+      <div className="app-shell">
       <main className="page-content">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -91,6 +99,7 @@ export default function App() {
       />
       <SeedBanner />
     </div>
+    </>
   );
 }
 
