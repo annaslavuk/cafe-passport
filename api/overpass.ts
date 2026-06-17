@@ -1,6 +1,6 @@
 // Vercel serverless proxy — forwards Overpass queries server-to-server, avoiding CORS.
-// Body parser disabled; we read the raw body, decode it with URLSearchParams (ensuring
-// [out:json] and other brackets survive intact), then re-encode cleanly for Overpass.
+// Body parser disabled so we can read and forward the raw URL-encoded body unchanged,
+// identical to what the Vite dev proxy does on localhost.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const config = {
@@ -31,9 +31,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  // URLSearchParams decodes the body properly, including %5B→[ and %5D→]
-  const query = new URLSearchParams(rawBody).get('data');
-  if (!query) {
+  if (!rawBody || !rawBody.includes('data=')) {
     res.status(400).json({ error: 'Missing data field in request body' });
     return;
   }
@@ -42,15 +40,17 @@ export default async function handler(req: any, res: any) {
   const tid = setTimeout(() => controller.abort(), 35_000);
 
   try {
-    // Re-encode the decoded query cleanly — no raw forwarding ambiguity.
-    // Explicit Accept matches the [out:json] directive in the query.
+    // Forward rawBody unchanged — the browser already encoded it with encodeURIComponent
+    // (%20 for spaces, %5B/%5D for brackets), which Overpass parses correctly.
+    // No Accept header: [out:json] in the query is the sole format directive.
+    // Adding Accept: application/json causes 406 when Overpass's form parser
+    // mis-handles any encoding detail and defaults to XML output.
     const upstream = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
       },
-      body: new URLSearchParams({ data: query }).toString(),
+      body: rawBody,
       signal: controller.signal,
     });
 
