@@ -38,14 +38,14 @@ magick public/icon.svg -resize 512x512 public/icon-512.png
 
 ## Build phases
 
-| # | Feature                         | Status   |
-|---|---------------------------------|----------|
-| 1 | Scaffold, data model, nav shell | ✅ Done  |
-| 2 | Passport grid + shop detail     | Next     |
-| 3 | Log a run                       | Planned  |
-| 4 | Ratings + breakdown             | Planned  |
-| 5 | Quests                          | Planned  |
-| 6 | Pomodoro coffee-pour timer      | Planned  |
-| 7 | Nearby map                      | Planned  |
-| 8 | Stats dashboard                 | Planned  |
-| 9 | Polish + export/import          | Planned  |
+| # | Feature                          | Status   |
+|---|-------------------------------- -|----------|
+| 1 | Scaffold, data model, nav shell  | Done     |
+| 2 | Passport grid + shop detail      | Done     |
+| 3 | Log a run                        | Done     |
+| 4 | Ratings + breakdown              | Done     |
+| 5 | Quests                           | Done     |
+| 6 | Pomodoro coffee-pour timer       | Done     |
+| 7 | Nearby map                       | Done     |
+| 8 | Stats dashboard                  | Done     |
+| 9 | Polish + create url using vercel | Done     |
