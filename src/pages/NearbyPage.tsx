@@ -34,7 +34,7 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
   // Ref keeps myShops fresh inside stable searchArea callback without re-creating it
   const myShopsRef = useRef<Shop[]>([]);
 
-  const [status,        setStatus]        = useState<'locating' | 'ready' | 'error'>('locating');
+  const [status,        setStatus]        = useState<'idle' | 'locating' | 'ready' | 'error'>('idle');
   const [errMsg,        setErrMsg]        = useState('');
   const [userPos,       setUserPos]       = useState<[number, number] | null>(null);
   const [sheet,         setSheet]         = useState<Sheet | null>(null);
@@ -49,13 +49,14 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
     db.shops.toArray().then(shops => { myShopsRef.current = shops; });
   }, []);
 
-  // Geolocation — just get position; the map init auto-searches the initial view
-  useEffect(() => {
+  // Geolocation — triggered by user tap, not on mount
+  const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setErrMsg('Geolocation is not supported by your browser.');
+      setErrMsg('Your browser doesn\'t support geolocation.');
       setStatus('error');
       return;
     }
+    setStatus('locating');
     navigator.geolocation.getCurrentPosition(
       pos => {
         setUserPos([pos.coords.latitude, pos.coords.longitude]);
@@ -64,12 +65,14 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
       err => {
         setErrMsg(
           err.code === err.PERMISSION_DENIED
-            ? 'Location permission denied. Enable it in your browser and refresh.'
-            : 'Could not determine your location.'
+            ? 'Location permission denied. Check your browser or device settings to re-enable it.'
+            : err.code === err.POSITION_UNAVAILABLE
+            ? 'Your location couldn\'t be determined. Make sure location services are enabled.'
+            : 'Location request timed out. Please try again.'
         );
         setStatus('error');
       },
-      { timeout: 12_000 },
+      { timeout: 10_000, enableHighAccuracy: false, maximumAge: 60_000 },
     );
   }, []);
 
@@ -175,34 +178,44 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
       {/* Map — always in DOM so ref is stable */}
       <div ref={mapDivRef} style={{ width: '100%', height: '100%', minHeight: 'inherit' }} />
 
-      {/* Locating overlay */}
+      {/* Pre-ready overlay — idle, locating, or error */}
       {status !== 'ready' && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', gap: 14,
           background: '#FDF6E9', zIndex: 1000,
         }}>
-          {status === 'error' ? (
+          {status === 'idle' && (
             <>
-              <div style={{ fontSize: '2.8rem' }}>📍</div>
+              <div style={{ fontSize: '2.8rem' }}>☕</div>
               <p style={{
-                color: '#6B3F1A', fontWeight: 700, textAlign: 'center',
-                padding: '0 32px', fontFamily: '"Inter", system-ui, sans-serif', lineHeight: 1.5,
+                color: '#2C1A0E', fontWeight: 700, textAlign: 'center',
+                padding: '0 32px', fontFamily: '"Playfair Display", Georgia, serif',
+                lineHeight: 1.4, fontSize: '1.15rem', margin: 0,
               }}>
-                {errMsg}
+                Find cafés near you
+              </p>
+              <p style={{
+                color: '#8B5E3C', textAlign: 'center', margin: '-4px 0 0',
+                padding: '0 40px', fontFamily: '"Inter", system-ui, sans-serif',
+                lineHeight: 1.55, fontSize: '0.84rem',
+              }}>
+                Tap below to see coffee shops around your current location.
               </p>
               <button
-                onClick={() => window.location.reload()}
+                onClick={requestLocation}
                 style={{
-                  marginTop: 4, padding: '9px 20px', background: '#6B3F1A', color: '#FDF6E9',
-                  border: 'none', borderRadius: 12, fontWeight: 700, fontSize: '0.85rem',
+                  marginTop: 6, padding: '11px 26px', background: '#6B3F1A', color: '#FDF6E9',
+                  border: 'none', borderRadius: 999, fontWeight: 700, fontSize: '0.9rem',
                   cursor: 'pointer', fontFamily: '"Inter", system-ui, sans-serif',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
                 }}
               >
-                Retry
+                📍 Find cafés near me
               </button>
             </>
-          ) : (
+          )}
+          {status === 'locating' && (
             <>
               <motion.div
                 animate={{ rotate: [0, 10, -10, 0] }}
@@ -214,6 +227,27 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
               <p style={{ color: '#8B5E3C', fontWeight: 600, fontFamily: '"Inter", system-ui, sans-serif' }}>
                 Finding your location…
               </p>
+            </>
+          )}
+          {status === 'error' && (
+            <>
+              <div style={{ fontSize: '2.8rem' }}>📍</div>
+              <p style={{
+                color: '#6B3F1A', fontWeight: 700, textAlign: 'center',
+                padding: '0 32px', fontFamily: '"Inter", system-ui, sans-serif', lineHeight: 1.5,
+              }}>
+                {errMsg}
+              </p>
+              <button
+                onClick={requestLocation}
+                style={{
+                  marginTop: 4, padding: '9px 20px', background: '#6B3F1A', color: '#FDF6E9',
+                  border: 'none', borderRadius: 999, fontWeight: 700, fontSize: '0.85rem',
+                  cursor: 'pointer', fontFamily: '"Inter", system-ui, sans-serif',
+                }}
+              >
+                Try again
+              </button>
             </>
           )}
         </div>
