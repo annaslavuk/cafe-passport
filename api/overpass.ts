@@ -1,8 +1,6 @@
 // Vercel serverless proxy — forwards Overpass queries server-to-server, avoiding CORS.
-//
-// Body parser is disabled so we can read the raw URL-encoded body and forward it
-// to Overpass untouched. This avoids any re-encoding or header-forwarding that
-// triggers Overpass's 406 Not Acceptable response.
+// Body parser disabled; we read the raw body, decode it with URLSearchParams (ensuring
+// [out:json] and other brackets survive intact), then re-encode cleanly for Overpass.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const config = {
@@ -17,7 +15,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  // Read raw body from the incoming stream without any parsing
+  // Read raw body from the incoming stream
   let rawBody: string;
   try {
     rawBody = await new Promise<string>((resolve, reject) => {
@@ -33,7 +31,9 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  if (!rawBody || !rawBody.includes('data=')) {
+  // URLSearchParams decodes the body properly, including %5B→[ and %5D→]
+  const query = new URLSearchParams(rawBody).get('data');
+  if (!query) {
     res.status(400).json({ error: 'Missing data field in request body' });
     return;
   }
@@ -42,16 +42,15 @@ export default async function handler(req: any, res: any) {
   const tid = setTimeout(() => controller.abort(), 35_000);
 
   try {
-    // Only set the two headers Overpass actually needs — no browser headers forwarded.
-    // Explicit Accept avoids the 406 Not Acceptable that an implicit or mismatched
-    // Accept header can trigger.
+    // Re-encode the decoded query cleanly — no raw forwarding ambiguity.
+    // Explicit Accept matches the [out:json] directive in the query.
     const upstream = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
       },
-      body: rawBody,
+      body: new URLSearchParams({ data: query }).toString(),
       signal: controller.signal,
     });
 
