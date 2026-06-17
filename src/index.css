@@ -1,0 +1,325 @@
+@import "tailwindcss";
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+@theme {
+  /* ── Palette ── */
+  --color-espresso:      #2C1A0E;
+  --color-mocha:         #6B3F1A;
+  --color-caramel:       #C27D38;
+  --color-latte:         #D4A96A;
+  --color-cream:         #FDF6E9;
+  --color-foam:          #F5EDD8;
+  --color-kraft:         #E8D5B0;
+  --color-sage:          #8B9D77;
+  --color-bark:          #4A2C15;
+  --color-tier-bronze:   #CD7F32;
+  --color-tier-silver:   #A8A9AD;
+  --color-tier-gold:     #D4AF37;
+  --color-tier-regular:  #E91E8C;
+
+  /* ── Typography ── */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans:    "Inter", "Segoe UI", system-ui, sans-serif;
+
+  /* ── Radius ── */
+  --radius-stamp: 0.875rem;
+  --radius-card:  1.25rem;
+  --radius-pill:  9999px;
+}
+
+/* ── Base reset ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #FDF6E9;
+  color: #2C1A0E;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+#root {
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Subtle grain texture overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+}
+
+/* ── App shell ── */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(44,26,14,0.12);
+  background: #FDF6E9;
+  position: relative;
+}
+
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Bottom nav ── */
+.bottom-nav {
+  display: flex;
+  background: #F5EDD8;
+  border-top: 1.5px solid #E8D5B0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 20px rgba(44,26,14,0.07);
+  flex-shrink: 0;
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 7px 2px 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #D4A96A;
+  position: relative;
+  transition: color 0.15s ease;
+  min-height: 52px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.nav-tab.active { color: #6B3F1A; }
+
+.nav-tab-label {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 18%;
+  right: 18%;
+  height: 2px;
+  background: #C27D38;
+  border-radius: 0 0 3px 3px;
+}
+
+/* ── Page header ── */
+.page-header {
+  padding: 18px 20px 10px;
+  background: #FDF6E9;
+  border-bottom: 1px solid #E8D5B0;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.page-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #2C1A0E;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 0.8rem;
+  color: #C27D38;
+  margin: 2px 0 0;
+  font-weight: 500;
+}
+
+/* ── Cards ── */
+.card {
+  background: #F5EDD8;
+  border: 1.5px solid #E8D5B0;
+  border-radius: 1.25rem;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(44,26,14,0.08);
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #6B3F1A;
+  color: #FDF6E9;
+  border: none;
+  border-radius: 0.875rem;
+  padding: 11px 22px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-primary:hover  { background: #4A2C15; }
+.btn-primary:active { transform: scale(0.96); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #E8D5B0;
+  color: #2C1A0E;
+  border: 1.5px solid #D4A96A;
+  border-radius: 0.875rem;
+  padding: 10px 20px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-secondary:hover  { background: #D4A96A; }
+.btn-secondary:active { transform: scale(0.96); }
+
+/* ── Stamp tiles ── */
+.stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px;
+}
+
+.stamp-tile {
+  aspect-ratio: 1;
+  border-radius: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.stamp-tile:active { transform: scale(0.93); }
+
+.stamp-tile.locked {
+  background: #F5EDD8;
+  border: 2px dashed #D4A96A;
+}
+
+.stamp-tile.unlocked {
+  box-shadow: 0 4px 14px rgba(44,26,14,0.18);
+}
+
+.stamp-emoji  { font-size: 1.75rem; line-height: 1; }
+.stamp-name   { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; text-align: center; line-height: 1.2; padding: 0 4px; }
+.stamp-tier   { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.85; }
+
+/* ── Seed banner ── */
+.seed-banner {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2C1A0E;
+  color: #FDF6E9;
+  border-radius: 9999px;
+  padding: 10px 18px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 24px rgba(44,26,14,0.4);
+  z-index: 50;
+  white-space: nowrap;
+  max-width: calc(100% - 32px);
+}
+
+.seed-banner button {
+  background: #C27D38;
+  color: #FDF6E9;
+  border: none;
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── Scrollbar styling ── */
+.page-content::-webkit-scrollbar { width: 3px; }
+.page-content::-webkit-scrollbar-track { background: transparent; }
+.page-content::-webkit-scrollbar-thumb { background: #E8D5B0; border-radius: 2px; }
+
+/* ── Placeholder page ── */
+.placeholder-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 12px;
+  padding: 32px 20px;
+  text-align: center;
+}
+
+.placeholder-icon {
+  font-size: 3.5rem;
+  opacity: 0.6;
+}
+
+.placeholder-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2C1A0E;
+}
+
+.placeholder-body {
+  font-size: 0.875rem;
+  color: #C27D38;
+  max-width: 240px;
+  line-height: 1.5;
+}
