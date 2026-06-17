@@ -579,18 +579,17 @@ async function fetchCafesByBbox(
 
     console.log(`[NearbyPage] Nominatim raw: ${cafes.length} cafes + ${coffeeShops.length} coffee shops`);
 
-    const mapped: OsmCafe[] = [...cafes, ...coffeeShops]
-      .map(p => {
-        const name = p.namedetails?.name ?? p.display_name.split(',')[0].trim();
-        const lat = parseFloat(p.lat);
-        const lon = parseFloat(p.lon);
-        if (!name || isNaN(lat) || isNaN(lon)) return null;
-        const addr = p.extratags?.['addr:housenumber'] && p.extratags?.['addr:street']
-          ? `${p.extratags['addr:housenumber']} ${p.extratags['addr:street']}`
-          : undefined;
-        return { id: p.osm_id, lat, lon, name, addr } satisfies OsmCafe;
-      })
-      .filter((c): c is OsmCafe => c !== null);
+    const mapped: OsmCafe[] = [...cafes, ...coffeeShops].flatMap(p => {
+      const name = p.namedetails?.name ?? p.display_name.split(',')[0].trim();
+      const lat = parseFloat(p.lat);
+      const lon = parseFloat(p.lon);
+      if (!name || isNaN(lat) || isNaN(lon)) return [];
+      const item: OsmCafe = { id: p.osm_id, lat, lon, name };
+      const hn = p.extratags?.['addr:housenumber'];
+      const st = p.extratags?.['addr:street'];
+      if (hn && st) item.addr = `${hn} ${st}`;
+      return [item];
+    });
 
     const seen = new Set<string>();
     const results = mapped.filter(c => {
