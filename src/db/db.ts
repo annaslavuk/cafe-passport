@@ -94,5 +94,10 @@ export async function refreshShopStats(shopId: number): Promise<void> {
     visitCount >= 10 ? 'gold' :
     visitCount >= 5  ? 'silver' : 'bronze';
 
-  await db.shops.update(shopId, { visitCount, tier, avgRatings: avg });
+  const pricedRuns = runs.filter(r => r.priceLevel != null);
+  const avgPriceLevel = pricedRuns.length > 0
+    ? Math.round(pricedRuns.reduce((s, r) => s + r.priceLevel!, 0) / pricedRuns.length) as 1 | 2 | 3
+    : undefined;
+
+  await db.shops.update(shopId, { visitCount, tier, avgRatings: avg, avgPriceLevel });
 }

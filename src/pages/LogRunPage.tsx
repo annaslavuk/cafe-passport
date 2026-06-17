@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { db, refreshShopStats, tickQuestProgress } from '../db/db';
 import type { Shop, RatingsSnapshot } from '../db/types';
-import { ACTIVITY_OPTIONS, EMPTY_RATINGS, RATING_FIELDS } from '../db/types';
+import { ACTIVITY_OPTIONS, EMPTY_RATINGS, RATING_FIELDS, priceDisplay } from '../db/types';
 import StampUnlockAnimation from '../components/ui/StampUnlockAnimation';
 import type { NavFn } from '../App';
 
@@ -43,6 +43,7 @@ export default function LogRunPage({ navigate, prefillShopId, prefillPomodoros, 
   const [customDur, setCustomDur] = useState(initCustomDur);
   const [activities, setActs]     = useState<string[]>([]);
   const [drink, setDrink]         = useState('');
+  const [priceLevel, setPrice]    = useState<1 | 2 | 3 | null>(null);
   const [ratings, setRatings]     = useState<RatingsSnapshot>({ ...EMPTY_RATINGS });
   const [pomodoros, setPomodoros] = useState(prefillPomodoros ?? 0);
   const [quest, setQuest]         = useState('');
@@ -110,6 +111,7 @@ export default function LogRunPage({ navigate, prefillShopId, prefillPomodoros, 
       durationMinutes: dur,
       activities,
       drinkOrdered: drink.trim() || undefined,
+      priceLevel: priceLevel ?? undefined,
       ratings,
       sessionQuest: quest.trim() || undefined,
       sessionQuestDone: questDone,
@@ -249,6 +251,34 @@ export default function LogRunPage({ navigate, prefillShopId, prefillPomodoros, 
             placeholder="e.g. oat milk flat white"
             style={inputFull}
           />
+        </FormCard>
+
+        {/* ── Price ── */}
+        <FormCard label="What did you spend?">
+          <div style={{ display: 'flex', gap: 8 }}>
+            {([1, 2, 3] as const).map(level => {
+              const active = priceLevel === level;
+              return (
+                <button
+                  key={level}
+                  onClick={() => setPrice(active ? null : level)}
+                  style={{
+                    flex: 1, padding: '8px 0', borderRadius: 999, border: 'none',
+                    background: active ? '#6B3F1A' : '#E8D5B0',
+                    color: active ? '#FDF6E9' : '#6B3F1A',
+                    fontWeight: 700, fontSize: '1rem', cursor: 'pointer',
+                    transition: 'background 0.12s, color 0.12s',
+                    fontFamily: '"Inter", system-ui, sans-serif',
+                  }}
+                >
+                  {'$'.repeat(level)}
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ margin: '6px 0 0', fontSize: '0.72rem', color: '#D4A96A' }}>
+            Optional — tap again to deselect
+          </p>
         </FormCard>
 
         {/* ── Ratings ── */}
@@ -407,7 +437,10 @@ function SelectedShopChip({ shop, onClear }: { shop: Shop; onClear: () => void }
       {shop.emoji && <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{shop.emoji}</span>}
       <div style={{ flex: 1, color: textColor }}>
         <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{shop.name}</div>
-        {shop.neighborhood && <div style={{ fontSize: '0.74rem', opacity: 0.75 }}>{shop.neighborhood}</div>}
+        <div style={{ fontSize: '0.74rem', opacity: 0.75 }}>
+          {[shop.neighborhood, shop.avgPriceLevel ? priceDisplay(shop.avgPriceLevel) : null]
+            .filter(Boolean).join(' · ')}
+        </div>
       </div>
       <button onClick={onClear} style={{
         background: 'rgba(0,0,0,0.18)', border: 'none', borderRadius: 999,

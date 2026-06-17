@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { db } from '../db/db';
 import type { Shop } from '../db/types';
-import { TIER_META, overallRating } from '../db/types';
+import { TIER_META, overallRating, priceDisplay } from '../db/types';
 import type { NavFn } from '../App';
 
 interface Props {
@@ -135,6 +135,14 @@ function StampTile({ shop, index, onTap }: { shop: Shop; index: number; onTap: (
             background: 'rgba(0,0,0,0.25)', borderRadius: 3, padding: '0 3px',
           }}>
             ★{overallRating(shop.avgRatings)}
+          </span>
+        )}
+        {shop.avgPriceLevel && (
+          <span style={{
+            fontSize: '0.55rem', fontWeight: 700,
+            background: 'rgba(0,0,0,0.22)', borderRadius: 3, padding: '0 3px',
+          }}>
+            {priceDisplay(shop.avgPriceLevel)}
           </span>
         )}
       </div>

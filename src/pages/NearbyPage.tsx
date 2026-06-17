@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../db/db';
 import type { Shop } from '../db/types';
+import { priceDisplay } from '../db/types';
 import type { NavFn } from '../App';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -406,6 +407,7 @@ export default function NearbyPage({ navigate }: { navigate: NavFn }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ fontSize: '0.78rem', color: '#6B8E23', fontWeight: 600, fontFamily: '"Inter", system-ui, sans-serif' }}>
                     ✓ In your passport · {sheet.shop.visitCount} visit{sheet.shop.visitCount !== 1 ? 's' : ''}
+                    {sheet.shop.avgPriceLevel ? ` · ${priceDisplay(sheet.shop.avgPriceLevel)} avg` : ''}
                   </div>
                   <button
                     className="btn-primary"

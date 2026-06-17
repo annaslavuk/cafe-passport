@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../db/db';
 import type { Shop, Run } from '../db/types';
-import { GOOD_FOR_OPTIONS, ACTIVITY_OPTIONS, overallRating } from '../db/types';
+import { GOOD_FOR_OPTIONS, ACTIVITY_OPTIONS, overallRating, priceDisplay } from '../db/types';
 import RatingBars from '../components/ui/RatingBars';
 import RadarChart from '../components/ui/RadarChart';
 import TierBadge from '../components/ui/TierBadge';
@@ -100,6 +100,9 @@ export default function ShopDetailPage({ shopId, navigate }: Props) {
           <HeroChip color={textOnAccent}>
             Since {fmtShort(shop.firstVisitedAt)}
           </HeroChip>
+          {shop.avgPriceLevel && (
+            <HeroChip color={textOnAccent}>{priceDisplay(shop.avgPriceLevel)} avg</HeroChip>
+          )}
         </div>
 
         <div style={{ marginTop: 14 }}>

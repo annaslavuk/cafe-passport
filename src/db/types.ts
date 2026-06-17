@@ -27,20 +27,26 @@ export type ShopTier = 'bronze' | 'silver' | 'gold' | 'regular';
 export type GoodForTag = 'deep-work' | 'casual-reading' | 'meetings' | 'dates' | 'writing' | string;
 
 export interface Shop {
-  id?:            number;
-  name:           string;
-  address?:       string;
-  neighborhood?:  string;
-  accentColor:    string;
-  emoji?:         string;
-  lat?:           number;
-  lng?:           number;
-  firstVisitedAt: Date;
-  visitCount:     number;
-  tier:           ShopTier;
-  avgRatings:     RatingsSnapshot;
-  notes?:         string;
-  goodFor:        GoodForTag[];
+  id?:             number;
+  name:            string;
+  address?:        string;
+  neighborhood?:   string;
+  accentColor:     string;
+  emoji?:          string;
+  lat?:            number;
+  lng?:            number;
+  firstVisitedAt:  Date;
+  visitCount:      number;
+  tier:            ShopTier;
+  avgRatings:      RatingsSnapshot;
+  avgPriceLevel?:  1 | 2 | 3;   // averaged from logged runs
+  notes?:          string;
+  goodFor:         GoodForTag[];
+}
+
+export function priceDisplay(level?: 1 | 2 | 3 | null): string {
+  if (!level) return '—';
+  return '$'.repeat(level);
 }
 
 export function computeTier(visitCount: number): ShopTier {
@@ -81,18 +87,19 @@ export const ACTIVITY_OPTIONS: { id: ActivityType; label: string; emoji: string 
 ];
 
 export interface Run {
-  id?:               number;
-  shopId:            number;
-  date:              Date;
-  startTime:         string; // "HH:MM"
-  durationMinutes:   number;
-  activities:        ActivityType[];
-  drinkOrdered?:     string;
-  ratings:           RatingsSnapshot;
-  sessionQuest?:     string;
-  sessionQuestDone:  boolean;
+  id?:                number;
+  shopId:             number;
+  date:               Date;
+  startTime:          string; // "HH:MM"
+  durationMinutes:    number;
+  activities:         ActivityType[];
+  drinkOrdered?:      string;
+  priceLevel?:        1 | 2 | 3;   // what the user spent this visit
+  ratings:            RatingsSnapshot;
+  sessionQuest?:      string;
+  sessionQuestDone:   boolean;
   pomodorosCompleted: number;
-  notes?:            string;
+  notes?:             string;
 }
 
 // ── Quest ─────────────────────────────────────────────────────────────────────
