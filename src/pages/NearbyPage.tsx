@@ -567,19 +567,15 @@ async function fetchCafesByBbox(
   const tid = setTimeout(() => controller.abort(), 35_000);
 
   try {
-    // Two parallel searches cover the main OSM tagging conventions for coffee shops
-    const search = (params: string) =>
-      fetch(`${base}&${params}`, { signal: controller.signal })
-        .then(r => { if (!r.ok) throw new Error(`Nominatim ${r.status}`); return r.json() as Promise<NominatimPlace[]>; });
+    // Nominatim only supports `amenity` for OSM tag-based POI search.
+    // `shop=coffee` is not a valid parameter and returns 400.
+    // amenity=cafe covers the vast majority of coffee shops in OSM.
+    const places: NominatimPlace[] = await fetch(`${base}&amenity=cafe`, { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error(`Nominatim ${r.status}`); return r.json(); });
 
-    const [cafes, coffeeShops] = await Promise.all([
-      search('amenity=cafe'),
-      search('shop=coffee'),
-    ]);
+    console.log(`[NearbyPage] Nominatim raw: ${places.length} places`);
 
-    console.log(`[NearbyPage] Nominatim raw: ${cafes.length} cafes + ${coffeeShops.length} coffee shops`);
-
-    const mapped: OsmCafe[] = [...cafes, ...coffeeShops].flatMap(p => {
+    const mapped: OsmCafe[] = places.flatMap(p => {
       const name = p.namedetails?.name ?? p.display_name.split(',')[0].trim();
       const lat = parseFloat(p.lat);
       const lon = parseFloat(p.lon);
